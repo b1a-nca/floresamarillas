@@ -1712,3 +1712,82 @@ h1 span::after {
   pointer-events: none;
   transform: translate(-50%, -50%) scale(0.75) rotate(-25deg);
 }
+
+/* =========================================
+   INTERACTION FIXES
+   ========================================= */
+
+/* Decorative elements should never block the
+   watering can or plants from receiving input. */
+
+.sun-glow,
+.sun,
+.cloud,
+.hill-back,
+.hill-front,
+.garden-speckles,
+.garden-ground,
+.garden-bed,
+.garden-path,
+.ground-pebble {
+  pointer-events: none;
+}
+
+
+/* The watering can must always be draggable. */
+
+.watering-can {
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grab;
+  z-index: 50;
+}
+
+.watering-can.dragging {
+  cursor: grabbing;
+}
+
+.watering-can.pouring {
+  cursor: grabbing;
+}
+
+
+/* Plants need to remain detectable by the JS. */
+
+.plant {
+  pointer-events: auto;
+  z-index: 40;
+}
+
+
+/* Keep the message above the garden without
+   interfering with the watering can. */
+
+.garden-message {
+  pointer-events: none;
+  z-index: 60;
+}
+
+
+/* Celebration shouldn't block anything. */
+
+.celebration-layer {
+  pointer-events: none;
+}
+
+
+/* Unlocked envelope can be clicked. */
+
+.envelope {
+  pointer-events: auto;
+}
+
+.envelope:disabled {
+  cursor: not-allowed;
+}
+
+.envelope.unlocked {
+  cursor: pointer;
+}

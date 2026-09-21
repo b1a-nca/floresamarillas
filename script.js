@@ -1,13 +1,56 @@
-/* =========================================================
-   Yellow Flower Day — garden game logic
-   No libraries, no backend, just Pointer Events and a little sunshine.
-   ========================================================= */
+const MAX_WATERINGS = 5;
+const WATERING_COOLDOWN = 850;
 
-/*
- * PERSONAL LETTER TEXT
- * Replace only the text between the quotes below with your own letter.
- */
-const LETTER_TEXT = "Okay so… you know Yellow Flower Day and how you’re supposed to give yellow flowers to someone you love?
+const STAGE_THRESHOLDS = [0, 1, 3, 5];
+
+const PLANT_NAMES = [
+  "Sunbeam",
+  "Honeydrop",
+  "Marigold",
+  "Buttercup"
+];
+
+const STAGE_LABELS = [
+  "seed",
+  "sprout",
+  "small plant",
+  "flower"
+];
+
+const STAGE_MESSAGES = [
+  "A tiny seed... 💛",
+  "A little sprout!",
+  "It's growing!",
+  "Look at her bloom! 🌼"
+];
+
+const gardenStage = document.getElementById("gardenStage");
+const wateringCan = document.getElementById("wateringCan");
+const plants = Array.from(document.querySelectorAll(".plant"));
+const gardenMessage = document.getElementById("gardenMessage");
+const celebrationLayer = document.getElementById("celebrationLayer");
+const envelope = document.getElementById("envelope");
+const letterModal = document.getElementById("letterModal");
+const letterText = document.getElementById("letterText");
+const closeLetter = document.getElementById("closeLetter");
+const resetGarden = document.getElementById("resetGarden");
+
+let progress = plants.map(() => 0);
+let lastWateredAt = plants.map(() => 0);
+
+let isDragging = false;
+let activePointerId = null;
+let grabOffsetX = 0;
+let grabOffsetY = 0;
+let hoveredPlant = -1;
+let isGardenComplete = false;
+
+
+/* ------------------------------
+   LETTER
+-------------------------------- */
+
+const LETTER_TEXT = `Okay so… you know Yellow Flower Day and how you’re supposed to give yellow flowers to someone you love?
 
 Well… obviously I had to get you some :3
 
@@ -21,78 +64,227 @@ I really love what we’re building. Even the complicated parts, because I know 
 
 So… yellow flowers :3
 
-For you and you always, luv u tons 💛";
+For you and you always, luv u tons 💛`;
 
-const MAX_WATERINGS = 5;
-const STAGE_THRESHOLDS = [0, 1, 3, 5];
-const PLANT_NAMES = ["Sunbeam", "Honeydrop", "Marigold", "Buttercup"];
-const STAGE_NAMES = ["seed and sprout", "small green plant", "plant with a bud", "fully grown yellow flower"];
-
-const gardenStage = document.getElementById("gardenStage");
-const wateringCan = document.getElementById("wateringCan");
-const plants = [...document.querySelectorAll(".plant")];
-const grownCount = document.getElementById("grownCount");
-const messageText = document.getElementById("messageText");
-const gardenMessage = document.getElementById("gardenMessage");
-const gameStatus = document.getElementById("gameStatus");
-const envelope = document.getElementById("envelope");
-const letterHint = document.getElementById("letterHint");
-const unlockedHint = document.getElementById("unlockedHint");
-const resetButton = document.getElementById("resetButton");
-const modalResetButton = document.getElementById("modalResetButton");
-const letterModal = document.getElementById("letterModal");
-const letterText = document.getElementById("letterText");
-const closeModalButton = document.getElementById("closeModal");
-const celebrationLayer = document.getElementById("celebrationLayer");
-
-let progress = plants.map(() => 0);
-let lastWateredAt = plants.map(() => 0);
-let isGardenComplete = false;
-let isDragging = false;
-let activePointerId = null;
-let grabOffsetX = 0;
-let grabOffsetY = 0;
-let hoveredPlantIndex = -1;
-let letterOpenTimer = null;
-let lastFocusedElement = null;
-
-/* Keep a can position inside the visible garden stage. The can uses its
-   center for left/top because its CSS transform is translate(-50%, -50%). */
-function moveCanFromPointer(event) {
-  const stageRect = gardenStage.getBoundingClientRect();
-  const canRect = wateringCan.getBoundingClientRect();
-  const canWidth = canRect.width;
-  const canHeight = canRect.height;
-
-  const desiredCenterX = event.clientX - stageRect.left - grabOffsetX + canWidth / 2;
-  const desiredCenterY = event.clientY - stageRect.top - grabOffsetY + canHeight / 2;
-  const minX = canWidth / 2;
-  const maxX = Math.max(minX, stageRect.width - canWidth / 2);
-  const minY = canHeight / 2;
-  const maxY = Math.max(minY, stageRect.height - canHeight / 2);
-
-  const boundedX = Math.min(maxX, Math.max(minX, desiredCenterX));
-  const boundedY = Math.min(maxY, Math.max(minY, desiredCenterY));
-
-  wateringCan.style.left = `${boundedX}px`;
-  wateringCan.style.top = `${boundedY}px`;
+if (letterText) {
+  letterText.textContent = LETTER_TEXT;
 }
 
+
+/* ------------------------------
+   PLANTS
+-------------------------------- */
+
+function getPlantStage(value) {
+  if (value >= 5) return 3;
+  if (value >= 3) return 2;
+  if (value >= 1) return 1;
+  return 0;
+}
+
+function updatePlantAppearance(index) {
+  const plant = plants[index];
+
+  if (!plant) return;
+
+  const stage = getPlantStage(progress[index]);
+
+  plant.dataset.progress = String(progress[index]);
+  plant.dataset.stage = String(stage);
+
+  plant.setAttribute(
+    "aria-label",
+    `${PLANT_NAMES[index]}: ${STAGE_LABELS[stage]}, ${progress[index]} of ${MAX_WATERINGS} waterings`
+  );
+
+  plant.style.setProperty("--plant-progress", progress[index]);
+
+  const count = plant.querySelector(".water-count");
+
+  if (count) {
+    count.textContent = `${progress[index]}/${MAX_WATERINGS}`;
+  }
+}
+
+
+/* ------------------------------
+   STATUS / MESSAGE
+-------------------------------- */
+
+function updateProgressDisplay() {
+  const finished = progress.filter(
+    value => value >= MAX_WATERINGS
+  ).length;
+
+  if (isGardenComplete) {
+    if (gardenMessage) {
+      gardenMessage.textContent =
+        "You grew all four flowers! 💛";
+    }
+    return;
+  }
+
+  if (gardenMessage) {
+    gardenMessage.textContent =
+      `${finished}/4 flowers fully grown`;
+  }
+}
+
+
+/* ------------------------------
+   COMPLETE GARDEN
+-------------------------------- */
+
+function completeGarden() {
+  if (isGardenComplete) return;
+
+  isGardenComplete = true;
+
+  wateringCan.classList.remove("dragging");
+  wateringCan.classList.remove("pouring");
+
+  if (envelope) {
+    envelope.disabled = false;
+    envelope.removeAttribute("disabled");
+    envelope.classList.add("unlocked");
+    envelope.setAttribute(
+      "aria-label",
+      "Open your letter"
+    );
+  }
+
+  if (celebrationLayer) {
+    celebrationLayer.classList.add("active");
+  }
+
+  if (gardenMessage) {
+    gardenMessage.textContent =
+      "All your flowers bloomed! Now there's something waiting for you... 💛";
+  }
+}
+
+
+/* ------------------------------
+   WATER PLANT
+-------------------------------- */
+
+function waterPlant(index) {
+  if (isGardenComplete) return;
+  if (index < 0 || index >= plants.length) return;
+  if (progress[index] >= MAX_WATERINGS) return;
+
+  const now = Date.now();
+
+  if (
+    now - lastWateredAt[index] <
+    WATERING_COOLDOWN
+  ) {
+    return;
+  }
+
+  lastWateredAt[index] = now;
+
+  progress[index]++;
+
+  updatePlantAppearance(index);
+
+  const stage = getPlantStage(progress[index]);
+
+  if (gardenMessage) {
+    gardenMessage.textContent =
+      `${PLANT_NAMES[index]}: ${STAGE_MESSAGES[stage]}`;
+  }
+
+  if (
+    progress.every(value => value >= MAX_WATERINGS)
+  ) {
+    completeGarden();
+  }
+
+  updateProgressDisplay();
+}
+
+
+/* ------------------------------
+   CAN POSITION
+-------------------------------- */
+
+function moveCanFromPointer(event) {
+  if (!gardenStage || !wateringCan) return;
+
+  const stageRect =
+    gardenStage.getBoundingClientRect();
+
+  const canRect =
+    wateringCan.getBoundingClientRect();
+
+  let x =
+    event.clientX -
+    stageRect.left -
+    grabOffsetX;
+
+  let y =
+    event.clientY -
+    stageRect.top -
+    grabOffsetY;
+
+  const halfWidth = canRect.width / 2;
+  const halfHeight = canRect.height / 2;
+
+  const minX = halfWidth;
+  const maxX = stageRect.width - halfWidth;
+
+  const minY = halfHeight;
+  const maxY = stageRect.height - halfHeight;
+
+  x = Math.max(minX, Math.min(maxX, x));
+  y = Math.max(minY, Math.min(maxY, y));
+
+  wateringCan.style.left = `${x}px`;
+  wateringCan.style.top = `${y}px`;
+}
+
+
+/* ------------------------------
+   FIND PLANT UNDER CAN
+-------------------------------- */
+
 function getHoveredPlant() {
-  const canRect = wateringCan.getBoundingClientRect();
+  if (!wateringCan) return -1;
+
+  const canRect =
+    wateringCan.getBoundingClientRect();
+
   let bestIndex = -1;
-  let largestOverlap = 0;
+  let bestOverlap = 80;
 
   plants.forEach((plant, index) => {
-    if (progress[index] >= MAX_WATERINGS) return;
+    if (progress[index] >= MAX_WATERINGS) {
+      return;
+    }
 
-    const plantRect = plant.getBoundingClientRect();
-    const overlapWidth = Math.max(0, Math.min(canRect.right, plantRect.right) - Math.max(canRect.left, plantRect.left));
-    const overlapHeight = Math.max(0, Math.min(canRect.bottom, plantRect.bottom) - Math.max(canRect.top, plantRect.top));
-    const overlapArea = overlapWidth * overlapHeight;
+    const rect =
+      plant.getBoundingClientRect();
 
-    if (overlapArea > largestOverlap && overlapArea > 80) {
-      largestOverlap = overlapArea;
+    const overlapWidth =
+      Math.max(
+        0,
+        Math.min(canRect.right, rect.right) -
+        Math.max(canRect.left, rect.left)
+      );
+
+    const overlapHeight =
+      Math.max(
+        0,
+        Math.min(canRect.bottom, rect.bottom) -
+        Math.max(canRect.top, rect.top)
+      );
+
+    const overlap =
+      overlapWidth * overlapHeight;
+
+    if (overlap > bestOverlap) {
+      bestOverlap = overlap;
       bestIndex = index;
     }
   });
@@ -100,245 +292,327 @@ function getHoveredPlant() {
   return bestIndex;
 }
 
-function setPouringState(index) {
-  hoveredPlantIndex = index;
-  wateringCan.classList.toggle("is-pouring", isDragging && index !== -1);
-}
 
-function stageForProgress(amount) {
-  let stage = 0;
-  STAGE_THRESHOLDS.forEach((threshold, index) => {
-    if (amount >= threshold) stage = index;
-  });
-  return stage;
-}
-
-function updatePlantAppearance(index, shouldAnimate = false) {
-  const plant = plants[index];
-  const currentStage = stageForProgress(progress[index]);
-  const previousStage = Number(plant.dataset.stage);
-
-  plant.dataset.progress = String(progress[index]);
-  plant.dataset.stage = String(currentStage);
-  plant.setAttribute(
-    "aria-label",
-    `${PLANT_NAMES[index]}, ${STAGE_NAMES[currentStage]}. ${progress[index]} of ${MAX_WATERINGS} watering interactions.`
-  );
-
-  if (shouldAnimate && currentStage !== previousStage) {
-    plant.classList.remove("is-growing");
-    // Force a reflow so a plant can play the same grow animation more than once.
-    void plant.offsetWidth;
-    plant.classList.add("is-growing");
-    window.setTimeout(() => plant.classList.remove("is-growing"), 900);
-  }
-}
-
-function updateProgressDisplay() {
-  const finishedPlants = progress.filter((amount) => amount >= MAX_WATERINGS).length;
-  grownCount.textContent = String(finishedPlants);
-}
-
-function waterPlant(index) {
-  if (index < 0 || isGardenComplete || progress[index] >= MAX_WATERINGS) return;
-
-  const now = performance.now();
-  // A can held in place still gives distinct, gentle drinks rather than
-  // instantly filling the plant. Moving away and back also creates a drink.
-  if (now - lastWateredAt[index] < 850) return;
-
-  lastWateredAt[index] = now;
-  const oldStage = stageForProgress(progress[index]);
-  progress[index] += 1;
-  const newStage = stageForProgress(progress[index]);
-  updatePlantAppearance(index, true);
-  updateProgressDisplay();
-
-  if (progress[index] >= MAX_WATERINGS) {
-    messageText.textContent = `${PLANT_NAMES[index]} is glowing in the sunshine ✦`;
-    gameStatus.textContent = `${PLANT_NAMES[index]} is a fully grown yellow flower.`;
-  } else if (newStage !== oldStage) {
-    messageText.textContent = `${PLANT_NAMES[index]} grew a little taller ✦`;
-    gameStatus.textContent = `${PLANT_NAMES[index]} grew into a ${STAGE_NAMES[newStage]}.`;
-  } else {
-    const drinksLeft = MAX_WATERINGS - progress[index];
-    messageText.textContent = `${PLANT_NAMES[index]} had a little drink · ${drinksLeft} more to bloom`;
-    gameStatus.textContent = `${PLANT_NAMES[index]} had a drink. ${drinksLeft} more watering interactions until it blooms.`;
-  }
-
-  if (progress.every((amount) => amount >= MAX_WATERINGS)) {
-    completeGarden();
-  }
-}
-
-function handleCanPosition(event) {
-  moveCanFromPointer(event);
-  const nextHoveredIndex = getHoveredPlant();
-  setPouringState(nextHoveredIndex);
-
-  if (nextHoveredIndex !== -1) {
-    waterPlant(nextHoveredIndex);
-  }
-}
+/* ------------------------------
+   DRAGGING
+-------------------------------- */
 
 function startDragging(event) {
-  if (isGardenComplete || isDragging) return;
-  if (event.button !== undefined && event.button !== 0) return;
-  if (event.isPrimary === false) return;
+  if (isGardenComplete) return;
+  if (!wateringCan) return;
+  if (event.button !== undefined && event.button !== 0) {
+    return;
+  }
 
   event.preventDefault();
+
   isDragging = true;
   activePointerId = event.pointerId;
-  const canRect = wateringCan.getBoundingClientRect();
-  grabOffsetX = event.clientX - canRect.left;
-  grabOffsetY = event.clientY - canRect.top;
-  wateringCan.classList.add("is-dragging");
-  wateringCan.setPointerCapture?.(event.pointerId);
+
+  const canRect =
+    wateringCan.getBoundingClientRect();
+
+  grabOffsetX =
+    event.clientX - canRect.left;
+
+  grabOffsetY =
+    event.clientY - canRect.top;
+
+  wateringCan.classList.add("dragging");
+
+  try {
+    wateringCan.setPointerCapture(
+      event.pointerId
+    );
+  } catch (error) {
+    // Some browsers don't support pointer capture.
+  }
+
+  moveCanFromPointer(event);
+
   handleCanPosition(event);
 }
 
+
 function dragCan(event) {
-  if (!isDragging || event.pointerId !== activePointerId) return;
+  if (!isDragging) return;
+
+  if (
+    activePointerId !== null &&
+    event.pointerId !== activePointerId
+  ) {
+    return;
+  }
+
   event.preventDefault();
+
+  moveCanFromPointer(event);
   handleCanPosition(event);
 }
+
 
 function stopDragging(event) {
   if (!isDragging) return;
-  if (event && event.pointerId !== undefined && activePointerId !== null && event.pointerId !== activePointerId) return;
+
+  if (
+    event &&
+    activePointerId !== null &&
+    event.pointerId !== activePointerId
+  ) {
+    return;
+  }
 
   isDragging = false;
   activePointerId = null;
-  hoveredPlantIndex = -1;
-  wateringCan.classList.remove("is-dragging", "is-pouring");
-  wateringCan.releasePointerCapture?.(event?.pointerId);
-}
 
-function addCelebration() {
-  celebrationLayer.replaceChildren();
-  const colors = ["#ffe27b", "#fff6ba", "#edb24b", "#e8a17c", "#9cc47c", "#ffffff"];
+  hoveredPlant = -1;
 
-  for (let i = 0; i < 30; i += 1) {
-    const petal = document.createElement("span");
-    petal.className = "confetti";
-    petal.style.setProperty("--left", `${3 + Math.random() * 94}%`);
-    petal.style.setProperty("--size", `${5 + Math.random() * 7}px`);
-    petal.style.setProperty("--duration", `${3.8 + Math.random() * 3.2}s`);
-    petal.style.setProperty("--delay", `${Math.random() * 1.5}s`);
-    petal.style.setProperty("--rotation", `${Math.round(Math.random() * 180)}deg`);
-    petal.style.setProperty("--color", colors[i % colors.length]);
-    celebrationLayer.appendChild(petal);
-  }
-}
+  wateringCan.classList.remove("dragging");
+  wateringCan.classList.remove("pouring");
 
-function completeGarden() {
-  if (isGardenComplete) return;
-  isGardenComplete = true;
-  gardenStage.classList.add("bouquet-complete");
-  gardenMessage.classList.add("is-complete");
-  messageText.textContent = "Look what you grew ✦";
-  gameStatus.textContent = "All four flowers are blooming. Look what you grew. The letter is unlocked.";
-  addCelebration();
-
-  envelope.disabled = false;
-  envelope.setAttribute("aria-disabled", "false");
-  envelope.setAttribute("aria-label", "Open the unlocked letter");
-  envelope.classList.add("is-unlocked");
-  letterHint.hidden = true;
-  unlockedHint.hidden = false;
-  resetButton.hidden = false;
-}
-
-function openLetter() {
-  if (!isGardenComplete || envelope.disabled) return;
-  lastFocusedElement = document.activeElement;
-  envelope.classList.add("is-opening");
-  window.clearTimeout(letterOpenTimer);
-  letterOpenTimer = window.setTimeout(() => {
-    letterText.textContent = LETTER_TEXT;
-    letterModal.hidden = false;
-    closeModalButton.focus();
-  }, 520);
-}
-
-function closeLetter() {
-  window.clearTimeout(letterOpenTimer);
-  letterModal.hidden = true;
-  envelope.classList.remove("is-opening");
-  if (lastFocusedElement && typeof lastFocusedElement.focus === "function") {
-    lastFocusedElement.focus();
-  } else if (!envelope.disabled) {
-    envelope.focus();
-  }
-}
-
-function resetGarden() {
-  closeLetter();
-  progress = plants.map(() => 0);
-  lastWateredAt = plants.map(() => 0);
-  isGardenComplete = false;
-  isDragging = false;
-  activePointerId = null;
-  hoveredPlantIndex = -1;
-
-  gardenStage.classList.remove("bouquet-complete");
-  gardenMessage.classList.remove("is-complete");
-  messageText.textContent = "Drag the little can over each plant";
-  gameStatus.textContent = "The garden is ready again. Drag the watering can over a plant.";
-  celebrationLayer.replaceChildren();
-
-  wateringCan.style.left = "";
-  wateringCan.style.top = "";
-  wateringCan.classList.remove("is-dragging", "is-pouring");
-
-  plants.forEach((plant, index) => {
-    plant.classList.remove("is-growing");
-    plant.dataset.progress = "0";
-    plant.dataset.stage = "0";
-    plant.setAttribute("aria-label", `${PLANT_NAMES[index]}, ${STAGE_NAMES[0]}. 0 of ${MAX_WATERINGS} watering interactions.`);
+  plants.forEach(plant => {
+    plant.classList.remove("hovered");
   });
 
-  updateProgressDisplay();
-  envelope.disabled = true;
-  envelope.setAttribute("aria-disabled", "true");
-  envelope.setAttribute("aria-label", "Locked envelope");
-  envelope.classList.remove("is-unlocked", "is-opening");
-  letterHint.hidden = false;
-  unlockedHint.hidden = true;
-  resetButton.hidden = true;
+  try {
+    if (
+      event &&
+      event.pointerId !== undefined &&
+      wateringCan.hasPointerCapture(event.pointerId)
+    ) {
+      wateringCan.releasePointerCapture(
+        event.pointerId
+      );
+    }
+  } catch (error) {
+    // Ignore pointer-capture errors.
+  }
 }
 
-/* Pointer Events make the same can interaction work for mouse, pen, and touch. */
-wateringCan.addEventListener("pointerdown", startDragging);
-wateringCan.addEventListener("pointermove", dragCan);
-wateringCan.addEventListener("pointerup", stopDragging);
-wateringCan.addEventListener("pointercancel", stopDragging);
-wateringCan.addEventListener("lostpointercapture", stopDragging);
-wateringCan.addEventListener("dragstart", (event) => event.preventDefault());
 
-wateringCan.addEventListener("keydown", (event) => {
-  if (event.key === "Enter" || event.key === " ") {
-    event.preventDefault();
-    gameStatus.textContent = "Drag the watering can with your pointer or finger to water the plants.";
+/* ------------------------------
+   HANDLE CAN POSITION
+-------------------------------- */
+
+function handleCanPosition(event) {
+  const newHoveredPlant =
+    getHoveredPlant();
+
+  if (newHoveredPlant !== hoveredPlant) {
+    plants.forEach(plant => {
+      plant.classList.remove("hovered");
+    });
+
+    hoveredPlant = newHoveredPlant;
+
+    if (hoveredPlant >= 0) {
+      plants[hoveredPlant].classList.add(
+        "hovered"
+      );
+    }
   }
+
+  if (hoveredPlant >= 0) {
+    wateringCan.classList.add("pouring");
+
+    if (isDragging) {
+      waterPlant(hoveredPlant);
+    }
+  } else {
+    wateringCan.classList.remove("pouring");
+  }
+}
+
+
+/* ------------------------------
+   POINTER EVENTS
+-------------------------------- */
+
+wateringCan.addEventListener(
+  "pointerdown",
+  startDragging
+);
+
+/*
+   IMPORTANT FIX:
+   Listen on document instead of only the
+   watering can. This means the drag continues
+   even when the pointer moves away from it.
+*/
+
+document.addEventListener(
+  "pointermove",
+  dragCan,
+  { passive: false }
+);
+
+document.addEventListener(
+  "pointerup",
+  stopDragging
+);
+
+document.addEventListener(
+  "pointercancel",
+  stopDragging
+);
+
+wateringCan.addEventListener(
+  "lostpointercapture",
+  () => {
+    if (isDragging) {
+      stopDragging();
+    }
+  }
+);
+
+wateringCan.addEventListener(
+  "dragstart",
+  event => event.preventDefault()
+);
+
+
+/* ------------------------------
+   KEYBOARD
+-------------------------------- */
+
+wateringCan.addEventListener(
+  "keydown",
+  event => {
+    if (event.key === "Enter" ||
+        event.key === " ") {
+
+      event.preventDefault();
+
+      if (hoveredPlant >= 0) {
+        waterPlant(hoveredPlant);
+      }
+    }
+  }
+);
+
+
+/* ------------------------------
+   ENVELOPE / LETTER
+-------------------------------- */
+
+function openLetter() {
+  if (!isGardenComplete) return;
+
+  if (!letterModal) return;
+
+  letterModal.classList.add("open");
+  letterModal.setAttribute("aria-hidden", "false");
+
+  document.body.classList.add("modal-open");
+}
+
+function closeLetterModal() {
+  if (!letterModal) return;
+
+  letterModal.classList.remove("open");
+  letterModal.setAttribute("aria-hidden", "true");
+
+  document.body.classList.remove("modal-open");
+}
+
+if (envelope) {
+  envelope.addEventListener(
+    "click",
+    openLetter
+  );
+}
+
+if (closeLetter) {
+  closeLetter.addEventListener(
+    "click",
+    closeLetterModal
+  );
+}
+
+if (letterModal) {
+  letterModal.addEventListener(
+    "click",
+    event => {
+      if (event.target === letterModal) {
+        closeLetterModal();
+      }
+    }
+  );
+}
+
+document.addEventListener(
+  "keydown",
+  event => {
+    if (
+      event.key === "Escape" &&
+      letterModal?.classList.contains("open")
+    ) {
+      closeLetterModal();
+    }
+  }
+);
+
+
+/* ------------------------------
+   RESET
+-------------------------------- */
+
+function resetGardenState() {
+  progress = plants.map(() => 0);
+  lastWateredAt = plants.map(() => 0);
+
+  isDragging = false;
+  activePointerId = null;
+  hoveredPlant = -1;
+  isGardenComplete = false;
+
+  wateringCan.classList.remove("dragging");
+  wateringCan.classList.remove("pouring");
+
+  plants.forEach((plant, index) => {
+    plant.classList.remove("hovered");
+    updatePlantAppearance(index);
+  });
+
+  if (envelope) {
+    envelope.disabled = true;
+    envelope.setAttribute("disabled", "");
+    envelope.classList.remove("unlocked");
+  }
+
+  if (celebrationLayer) {
+    celebrationLayer.classList.remove("active");
+  }
+
+  closeLetterModal();
+
+  updateProgressDisplay();
+
+  if (gardenMessage) {
+    gardenMessage.textContent =
+      "Drag the watering can to your flowers 💛";
+  }
+}
+
+if (resetGarden) {
+  resetGarden.addEventListener(
+    "click",
+    resetGardenState
+  );
+}
+
+
+/* ------------------------------
+   INITIALIZE
+-------------------------------- */
+
+plants.forEach((plant, index) => {
+  progress[index] =
+    Number(plant.dataset.progress) || 0;
+
+  updatePlantAppearance(index);
 });
 
-envelope.addEventListener("click", openLetter);
-closeModalButton.addEventListener("click", closeLetter);
-resetButton.addEventListener("click", resetGarden);
-modalResetButton.addEventListener("click", () => {
-  resetGarden();
-  wateringCan.focus();
-});
-
-letterModal.addEventListener("click", (event) => {
-  if (event.target === letterModal) closeLetter();
-});
-
-document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && !letterModal.hidden) closeLetter();
-});
-
-/* Initial state is explicit so the file also behaves correctly after a reset. */
-plants.forEach((plant, index) => updatePlantAppearance(index));
 updateProgressDisplay();
+
+console.log("🌼 Yellow Flower Garden loaded!");

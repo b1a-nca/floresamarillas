@@ -7,7 +7,21 @@
  * PERSONAL LETTER TEXT
  * Replace only the text between the quotes below with your own letter.
  */
-const LETTER_TEXT = "Your letter goes here. Replace this text with your own message.";
+const LETTER_TEXT = "Okay so… you know Yellow Flower Day and how you’re supposed to give yellow flowers to someone you love?
+
+Well… obviously I had to get you some :3
+
+And I know I think I did this last year too, but honestly… it feels really different this time.
+
+Because last year, we were… us, but not this us, yk? And now I get to look at you and actually say that you’re my girlfriend. And I don’t think I’ll ever get tired of that.
+
+I just wanted to give you these because I love you so, so much. And because I’m really grateful for you. For everything we’ve been through, everything we’ve figured out, everything we’ve learned about each other, and especially for how much we’ve grown together lately.
+
+I really love what we’re building. Even the complicated parts, because I know we’re both trying, and I know we’re choosing each other and trying to understand each other better.
+
+So… yellow flowers :3
+
+For you and you always, luv u tons 💛";
 
 const MAX_WATERINGS = 5;
 const STAGE_THRESHOLDS = [0, 1, 3, 5];

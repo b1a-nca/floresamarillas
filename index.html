@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#fff7dc" />
+  <title>Yellow Flower Day Garden</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="site-shell">
+    <div class="ambient ambient-one" aria-hidden="true"></div>
+    <div class="ambient ambient-two" aria-hidden="true"></div>
+    <div class="ambient ambient-three" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <div class="title-lockup">
+        <p class="eyebrow"><span class="eyebrow-sparkle" aria-hidden="true">✦</span> a tiny garden for you</p>
+        <h1>Yellow Flower <span>Day</span></h1>
+        <p class="intro">A little sunshine is waiting to bloom. Pick up the can and give each tiny plant some love.</p>
+      </div>
+      <div class="day-badge">
+        <span class="badge-sun" aria-hidden="true">☼</span>
+        <span>Yellow<br />Flower Day</span>
+      </div>
+    </header>
+
+    <main class="game-layout">
+      <section class="garden-card" aria-labelledby="garden-title">
+        <div class="card-topline">
+          <div>
+            <p class="section-kicker">the little garden</p>
+            <h2 id="garden-title">Help the sunshine flowers grow</h2>
+          </div>
+          <div class="growth-count" aria-live="polite">
+            <span class="count-number" id="grownCount">0</span>
+            <span class="count-label">of 4<br />in bloom</span>
+          </div>
+        </div>
+
+        <div class="garden-stage" id="gardenStage">
+          <div class="sun-glow" aria-hidden="true"></div>
+          <div class="sun" aria-hidden="true"><span>✦</span></div>
+          <div class="cloud cloud-one" aria-hidden="true"></div>
+          <div class="cloud cloud-two" aria-hidden="true"></div>
+          <div class="hill hill-back" aria-hidden="true"></div>
+          <div class="hill hill-front" aria-hidden="true"></div>
+          <div class="garden-speckles" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+          <div class="garden-ground" aria-hidden="true">
+            <div class="garden-bed bed-left"></div>
+            <div class="garden-bed bed-right"></div>
+            <div class="garden-path"></div>
+            <span class="ground-pebble pebble-one"></span>
+            <span class="ground-pebble pebble-two"></span>
+            <span class="ground-pebble pebble-three"></span>
+          </div>
+
+          <!-- Each plant is drawn with CSS so the whole garden works offline. -->
+          <div class="plant plant-one" data-plant-index="0" data-stage="0" data-progress="0" role="img" aria-label="Sunflower one, seed stage">
+            <div class="plant-art">
+              <span class="seed" aria-hidden="true"></span>
+              <span class="stem" aria-hidden="true"></span>
+              <span class="leaf leaf-left" aria-hidden="true"></span>
+              <span class="leaf leaf-right" aria-hidden="true"></span>
+              <span class="bud" aria-hidden="true"></span>
+              <span class="flower-head" aria-hidden="true"><i class="petal p1"></i><i class="petal p2"></i><i class="petal p3"></i><i class="petal p4"></i><i class="petal p5"></i><i class="petal p6"></i><b class="flower-center"></b></span>
+            </div>
+            <span class="plant-name" aria-hidden="true">sunbeam</span>
+            <span class="plant-sparkle" aria-hidden="true">✦</span>
+          </div>
+
+          <div class="plant plant-two" data-plant-index="1" data-stage="0" data-progress="0" role="img" aria-label="Sunflower two, seed stage">
+            <div class="plant-art">
+              <span class="seed" aria-hidden="true"></span>
+              <span class="stem" aria-hidden="true"></span>
+              <span class="leaf leaf-left" aria-hidden="true"></span>
+              <span class="leaf leaf-right" aria-hidden="true"></span>
+              <span class="bud" aria-hidden="true"></span>
+              <span class="flower-head" aria-hidden="true"><i class="petal p1"></i><i class="petal p2"></i><i class="petal p3"></i><i class="petal p4"></i><i class="petal p5"></i><i class="petal p6"></i><b class="flower-center"></b></span>
+            </div>
+            <span class="plant-name" aria-hidden="true">honeydrop</span>
+            <span class="plant-sparkle" aria-hidden="true">✦</span>
+          </div>
+
+          <div class="plant plant-three" data-plant-index="2" data-stage="0" data-progress="0" role="img" aria-label="Sunflower three, seed stage">
+            <div class="plant-art">
+              <span class="seed" aria-hidden="true"></span>
+              <span class="stem" aria-hidden="true"></span>
+              <span class="leaf leaf-left" aria-hidden="true"></span>
+              <span class="leaf leaf-right" aria-hidden="true"></span>
+              <span class="bud" aria-hidden="true"></span>
+              <span class="flower-head" aria-hidden="true"><i class="petal p1"></i><i class="petal p2"></i><i class="petal p3"></i><i class="petal p4"></i><i class="petal p5"></i><i class="petal p6"></i><b class="flower-center"></b></span>
+            </div>
+            <span class="plant-name" aria-hidden="true">marigold</span>
+            <span class="plant-sparkle" aria-hidden="true">✦</span>
+          </div>
+
+          <div class="plant plant-four" data-plant-index="3" data-stage="0" data-progress="0" role="img" aria-label="Sunflower four, seed stage">
+            <div class="plant-art">
+              <span class="seed" aria-hidden="true"></span>
+              <span class="stem" aria-hidden="true"></span>
+              <span class="leaf leaf-left" aria-hidden="true"></span>
+              <span class="leaf leaf-right" aria-hidden="true"></span>
+              <span class="bud" aria-hidden="true"></span>
+              <span class="flower-head" aria-hidden="true"><i class="petal p1"></i><i class="petal p2"></i><i class="petal p3"></i><i class="petal p4"></i><i class="petal p5"></i><i class="petal p6"></i><b class="flower-center"></b></span>
+            </div>
+            <span class="plant-name" aria-hidden="true">buttercup</span>
+            <span class="plant-sparkle" aria-hidden="true">✦</span>
+          </div>
+
+          <div class="watering-can" id="wateringCan" role="button" tabindex="0" aria-label="Watering can. Drag me over a plant." aria-describedby="wateringTip">
+            <span class="can-handle" aria-hidden="true"></span>
+            <span class="can-body" aria-hidden="true"><span class="can-shine"></span><span class="can-flower">✿</span></span>
+            <span class="can-spout" aria-hidden="true"></span>
+            <span class="can-spout-tip" aria-hidden="true"></span>
+            <span class="water-stream" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+            <span class="can-grip" aria-hidden="true"></span>
+          </div>
+
+          <div class="garden-message" id="gardenMessage" aria-live="polite">
+            <span class="message-sparkle" aria-hidden="true">✦</span>
+            <span id="messageText">Drag the little can over each plant</span>
+            <span class="message-sparkle" aria-hidden="true">✦</span>
+          </div>
+          <div class="celebration-layer" id="celebrationLayer" aria-hidden="true"></div>
+        </div>
+
+        <div class="garden-controls">
+          <p class="watering-tip" id="wateringTip"><span class="tip-icon" aria-hidden="true">♡</span> Hold the can over a plant until it gets a drink. Each little cloud means one watering.</p>
+          <button class="reset-button reset-in-garden" id="resetButton" type="button" hidden>↻ start the garden again</button>
+        </div>
+        <p class="sr-only" id="gameStatus" aria-live="polite">The garden is ready. Drag the watering can over a plant.</p>
+      </section>
+
+      <aside class="letter-card" aria-labelledby="letter-title">
+        <div class="letter-card-top">
+          <span class="stamp-mark" aria-hidden="true">✿</span>
+          <div>
+            <p class="section-kicker">a little something</p>
+            <h2 id="letter-title">A letter for later</h2>
+          </div>
+        </div>
+
+        <div class="letter-divider" aria-hidden="true"><span>♡</span><i></i><span>♡</span></div>
+
+        <div class="envelope-area">
+          <button class="envelope" id="envelope" type="button" disabled aria-disabled="true" aria-label="Locked envelope">
+            <span class="envelope-shadow" aria-hidden="true"></span>
+            <span class="envelope-back" aria-hidden="true"></span>
+            <span class="envelope-paper" aria-hidden="true"></span>
+            <span class="envelope-flap" aria-hidden="true"></span>
+            <span class="envelope-front" aria-hidden="true"></span>
+            <span class="envelope-seal" aria-hidden="true">✦</span>
+            <span class="envelope-lock" aria-hidden="true">♡</span>
+          </button>
+          <span class="envelope-sparkle sparkle-left" aria-hidden="true">✦</span>
+          <span class="envelope-sparkle sparkle-right" aria-hidden="true">✧</span>
+        </div>
+
+        <div class="letter-copy" id="letterHint">
+          <p class="locked-title"><span aria-hidden="true">⌁</span> Still tucked away</p>
+          <p>Grow all four flowers and this little envelope will open its heart.</p>
+        </div>
+        <div class="letter-copy unlocked-copy" id="unlockedHint" hidden>
+          <p class="locked-title"><span aria-hidden="true">✦</span> A little surprise</p>
+          <p>You did it. Your flowers made a bouquet — the letter is ready for you.</p>
+        </div>
+
+        <div class="letter-footer">
+          <span>made with sunshine</span>
+          <span aria-hidden="true">☼</span>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="site-footer"><span aria-hidden="true">✦</span> take your time, little gardener <span aria-hidden="true">✦</span></footer>
+  </div>
+
+  <div class="modal-backdrop" id="letterModal" hidden>
+    <div class="letter-modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <button class="modal-close" id="closeModal" type="button" aria-label="Close letter">×</button>
+      <div class="modal-flower" aria-hidden="true"><span>✿</span></div>
+      <p class="section-kicker">a note, just for you</p>
+      <h2 id="modalTitle">You grew something lovely</h2>
+      <div class="letter-paper">
+        <p class="letter-greeting">Dear you,</p>
+        <p id="letterText"></p>
+        <p class="letter-signoff">with a pocketful of sunshine,<br /><span>♡</span></p>
+      </div>
+      <button class="modal-replay reset-button" id="modalResetButton" type="button">↻ grow another bouquet</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
